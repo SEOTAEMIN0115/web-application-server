@@ -1,4 +1,4 @@
-package webserver;
+package servlet.request;
 
 import java.io.*;
 import java.net.Socket;
@@ -7,13 +7,16 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RequestHandler extends Thread {
-    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+import servlet.request.header.RequestHandlerParser;
 
+public class ServletRequestHandler extends Thread implements RequestHandler {
+    private static final Logger log = LoggerFactory.getLogger(ServletRequestHandler.class);
+    private RequestHandlerParser requestHandlerParser;
     private Socket connection;
 
-    public RequestHandler(Socket connectionSocket) {
+    public ServletRequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
+
     }
 
     public void run() {
