@@ -3,20 +3,27 @@ package servlet.request;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import servlet.request.header.RequestHandlerParser;
+import servlet.request.header.RequestHeader;
+import servlet.request.header.RequestHeaderMapper;
 
 public class ServletRequestHandler extends Thread implements RequestHandler {
     private static final Logger log = LoggerFactory.getLogger(ServletRequestHandler.class);
     private RequestHandlerParser requestHandlerParser;
+    private RequestHeaderMapper requestHeaderMapper;
+    private HandlerMapping handlerMapping;
     private Socket connection;
 
     public ServletRequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
-
+        this.requestHandlerParser = requestHandlerParser;
+        this.requestHeaderMapper = requestHeaderMapper;
+        this.handlerMapping = handlerMapping;
     }
 
     public void run() {
@@ -25,24 +32,9 @@ public class ServletRequestHandler extends Thread implements RequestHandler {
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
 
-            InputStreamReader inputStreamReader = new InputStreamReader(in);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            Map<String, List<String>> headers = new HashMap<>();
-            while(true){
-                String rawHeader = bufferedReader.readLine();
-                if(rawHeader.isEmpty())
-                    break;
-                List<String> values = new LinkedList<>();
-                String[] parsedHeaders = rawHeader.split(" ");
-                String key = parsedHeaders[0];
-                if (key.endsWith(":")){
-                    key = key.substring(0, key.length() - 1);
-                }
-                values.addAll(Arrays.asList(parsedHeaders).subList(1, parsedHeaders.length));
-                System.out.println(key);
-                System.out.println(values);
-                headers.put(key, values);
-            }
+            Map<String, List<String>> headers = requestHandlerParser.parse(in);
+            RequestHeader requestHeader = requestHeaderMapper.map(headers);
+            handlerMapping.handlerMapping(requestHeader, out);
 
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
