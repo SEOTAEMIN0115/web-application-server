@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import servlet.request.ServletRequestHandler;
+import servlet.response.enums.StatusCode;
 
 public class ResponseHeader {
 
@@ -18,15 +19,34 @@ public class ResponseHeader {
         this.outputStream = outputStream;
     }
 
-    public void response(byte[] body){
-        DataOutputStream dos = new DataOutputStream(this.outputStream);
-        response200Header(dos, body.length);
-        responseBody(dos, body);
+    public void response(byte[] body, StatusCode statusCode){
+        if (statusCode == StatusCode.OK){
+            DataOutputStream dos = new DataOutputStream(this.outputStream);
+            response200Header(dos, body.length);
+            responseBody(dos, body);
+        }
+        else if(statusCode == StatusCode.FOUND){
+            DataOutputStream dos = new DataOutputStream(this.outputStream);
+            response302Header(dos, body.length);
+            responseBody(dos, body);
+        }
+
     }
 
     public void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public void response302Header(DataOutputStream dos, int lengthOfBodyContent){
+        try {
+            dos.writeBytes("HTTP/1.1 302 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
@@ -43,4 +63,5 @@ public class ResponseHeader {
             log.error(e.getMessage());
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package servlet.request.header;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import servlet.request.header.enums.Method;
@@ -18,8 +19,14 @@ public class RequestHeader {
 
     private String url;
 
+    private Map<String, String> getBody;
+
+
+    private Map<String, String> postBody;
+
     public RequestHeader(Method method, List<String> cookie, List<String> accept, String connection, String host,
-        Map<String, List<String>> headers, String url) {
+        Map<String, List<String>> headers, String url, Map<String, String> getBody,
+        Map<String, String> postBody) {
         this.method = method;
         this.cookie = cookie;
         this.accept = accept;
@@ -27,19 +34,21 @@ public class RequestHeader {
         this.host = host;
         this.headers = headers;
         this.url = url;
+        this.getBody = getBody;
+        this.postBody = postBody;
     }
 
-    @Override
-    public String toString() {
-        return "RequestHeader{" +
-            "method=" + method +
-            ", cookie=" + cookie +
-            ", accept=" + accept +
-            ", connection='" + connection + '\'' +
-            ", host='" + host + '\'' +
-            ", headers=" + headers +
-            ", url='" + url + '\'' +
-            '}';
+    public Map<String, String> getGetBody() {
+        return getBody;
+    }
+
+    public Map<String, String> getPostBody() {
+        return postBody;
+
+
+
+
+
     }
 
     public Method getMethod() {
@@ -66,6 +75,19 @@ public class RequestHeader {
         return headers;
     }
 
+    @Override
+    public String toString() {
+        return "RequestHeader{" +
+            "method=" + method +
+            ", cookie=" + cookie +
+            ", accept=" + accept +
+            ", connection='" + connection + '\'' +
+            ", host='" + host + '\'' +
+            ", headers=" + headers +
+            ", url='" + url + '\'' +
+            '}';
+    }
+
     public String getUrl() {
         return url;
     }
@@ -82,17 +104,18 @@ public class RequestHeader {
 
         private String url;
 
+        private Map<String, String> getBody;
+        private Map<String, String> postBody;
+
         private Map<String, List<String>> headers;
 
-        public Builder(RequestHeader requestHeader) {
-            this.method = requestHeader.method;
-            this.cookie = requestHeader.cookie;
-            this.accept = requestHeader.accept;
-            this.connection = requestHeader.connection;
-            this.host = requestHeader.host;
-            this.headers = requestHeader.headers;
-            this.url = requestHeader.url;
-        }
+
+
+
+
+
+
+
 
         public Builder(){
 
@@ -128,11 +151,31 @@ public class RequestHeader {
 
         public Builder setUrls(String url){
             this.url = url;
+            if (url.contains("?")){
+                int end_url = url.indexOf("?");
+                this.url = url.substring(0, end_url);
+                this.getBody = makeGetBody(url.substring(end_url + 1));
+            }
+            return this;
+        }
+
+        public Builder setPostBody(Map<String, String> postBody){
+            this.postBody = postBody;
             return this;
         }
 
         public RequestHeader build(){
-            return new RequestHeader(method, cookie, accept, connection, host, headers, url);
+            return new RequestHeader(method, cookie, accept, connection, host, headers, url, getBody, postBody);
+        }
+
+        private Map<String, String> makeGetBody(String rawGetBody){
+            Map<String, String> getBody = new HashMap<>();
+            String[] getParameters = rawGetBody.split("&");
+            for (String getParameter : getParameters) {
+                String[] getParam = getParameter.split("=");
+                getBody.put(getParam[0], getParam[1]);
+            }
+            return getBody;
         }
     }
 }
